@@ -1,153 +1,152 @@
+
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import * as pdflib from 'pdf-parse';
 
+// @ts-ignore
+const pdf = pdflib.default || pdflib;
+
+// Initialize OpenAI
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(request: Request) {
-    try {
-        const formData = await request.formData();
-        const description = formData.get('description') as string;
-        const serviceType = formData.get('serviceType') as string;
-        // const complexity = formData.get('complexity') as string; // Optional if we want to trust AI more
-        const file = formData.get('file') as File | null;
-
-        if (!process.env.OPENAI_API_KEY) {
-            return NextResponse.json(
-                { error: 'OpenAI API key not configured' },
-                { status: 500 }
-            );
-        }
-
-        let fileContent = '';
-        if (file) {
-            // Basic text extraction for text-based files
-            // For MVP, we'll assume text/plain or try to read text.
-            // If it's a PDF, we'd need pdf-parse, but let's start with description + text file support.
-            try {
-                fileContent = await file.text();
-            } catch (e) {
-                console.error("Error reading file:", e);
-                fileContent = "[Attached file could not be read as text]";
-            }
-        }
-
-      const systemPrompt = `
-You are a senior technical project manager, solution architect, and delivery lead at a software services company.
-
-A client has uploaded a project document and/or provided a project description.
-You must carefully analyze the uploaded document using document understanding and information extraction and form a deep, structured understanding of the client’s project.
-
-Your goal is NOT just to estimate cost, but to clearly communicate:
-- Our understanding of the client’s business problem
-- How we plan to execute the project end-to-end
-- What technical approach, architecture, and tools we will use
-- Why these choices are suitable for the project
-
-IMPORTANT CONTEXT:
-- The client will review this analysis.
-- This represents “Our Understanding of Your Project & Execution Plan”.
-- The company is flexible and capable of working with ANY suitable technology.
-- You may recommend technologies where appropriate, but do not lock the client into a single stack unless explicitly required.
-- Be detailed, professional, and implementation-oriented.
-
---------------------------------------------------
-
-Output MUST be a valid JSON object matching this exact schema:
-
-{
-  "projectUnderstanding": {
-    "summary": "string (Detailed summary of what the client wants to build)",
-    "businessObjectives": ["string", "string"],
-    "targetUsers": ["string", "string"],
-    "keyChallenges": ["string", "string"]
-  },
-
-  "executionApproach": {
-    "overallStrategy": "string (How we will approach delivery from discovery to launch)",
-    "developmentMethodology": "string (e.g., Agile / Iterative)",
-    "communicationAndReporting": "string (How progress will be shared with the client)"
-  },
-
-  "technicalArchitecture": {
-    "frontendApproach": "string (How UI will be built, flexibility in frameworks)",
-    "backendApproach": "string (API design, services, scalability approach)",
-    "databaseApproach": "string (Data modeling and storage strategy)",
-    "infrastructureAndDeployment": "string (Cloud, hosting, CI/CD, environments)",
-    "securityConsiderations": ["string", "string"]
-  },
-
-  "featureExecutionPlan": [
-    {
-      "featureName": "string",
-      "implementationDetails": "string (How this feature will be built and integrated)",
-      "dependencies": ["string", "string"]
-    }
-  ],
-
-  "projectPhases": [
-    {
-      "phaseName": "string (e.g., Discovery, Design, Development, Testing)",
-      "activities": ["string", "string"],
-      "deliverables": ["string", "string"]
-    }
-  ],
-
-  "assumptionsAndFlexibility": {
-    "assumptions": ["string", "string"],
-    "technologyFlexibility": "string (Statement confirming flexibility across tech stacks)"
-  },
-
-  "highLevelEstimation": {
-    "complexity": "Low | Medium | High | Very High",
-    "estimatedTimeline": "string (e.g., 10–12 weeks)",
-    "estimationNotes": "string (What influenced complexity and timeline)"
+// Helper for PDF parsing to handle ESM/CommonJS quirks if needed
+async function parsePdf(buffer: Buffer) {
+  let pdfFunc = pdf;
+  // @ts-ignore
+  if (typeof pdfFunc !== 'function' && pdfFunc.default) {
+    // @ts-ignore
+    pdfFunc = pdfFunc.default;
   }
+  // Check if it's the class-based v2 or function-based v1
+  // @ts-ignore
+  const pdfModule = await import('pdf-parse');
+  const PDFParse = pdfModule.default?.PDFParse || pdfModule.PDFParse || pdfModule.default;
+
+  // Try new class-based approach first if available
+  if (typeof PDFParse === 'function' && PDFParse.prototype && PDFParse.prototype.getText) {
+    try {
+      const parser = new PDFParse({ data: buffer });
+      const result = await parser.getText();
+      await parser.destroy();
+      return result.text;
+    } catch (e) {
+      console.log("PDF Class parse failed, trying fallback", e);
+    }
+  }
+
+  // Fallback to function call (v1 style)
+  return (await pdfFunc(buffer)).text;
 }
 
---------------------------------------------------
+const systemPrompt = `You are the **Senior Technical Architect and Project Manager** at **Talentronaut Technologies**, a premium full-stack software development agency.
 
-GUIDELINES:
-- Base your understanding strictly on the uploaded document and project description.
-- If something is unclear, state reasonable assumptions explicitly.
-- Do NOT include pricing breakdowns here.
-- Do NOT include final cost numbers.
-- Do NOT include sales language.
-- Use clear, confident, professional tone suitable for enterprise clients.
+**YOUR BRAND IDENTITY (Talentronaut):**
+- **Tagline:** "Engineer powerful software experiences that drive business growth."
+- **Expertise:** You specialize in secure, scalable, and high-performance custom software (AI, SaaS, FinTech, EdTech, Healthcare).
+- **Tone:** Professional, Consultative, Confident, and Detailed.
 
-Return ONLY valid JSON.
-No explanations, markdown, or extra text.
+**YOUR GOAL:**
+Analyze the user's raw input (which may be vague) and generate a **comprehensive, contract-ready Project Proposal**. You must strictly adhere to the following logic to fill in gaps:
+
+**1. INTELLIGENT INFERENCE (The "Talentronaut" Standard):**
+   - **Never return "Not Specified".** You must ESTIMATE realistic details based on industry standards.
+   - **If Web Development (Reference: VRDIGITAL/Demo style):** Break the Scope down by *Pages* (e.g., Homepage, Category Page, Product Page) and *Features* (e.g., "Wishlist", "Payment Gateway", "SEO"). Always include "Admin Dashboard" and "Analytics" even if not asked.
+   - **If AI/App/SaaS (Reference: Proposal.docx style):** Break the Scope down by *Phases* (Phase 1: MVP & Core Transactional, Phase 2: Scaling & UX, Phase 3: AI/ML & Predictive).
+   - **If CRM/Internal Tool (Reference: Talentdemo style):** Focus on Role-based Access, Reporting, and Workflow Automation.
+
+**2. FINANCIAL & TIMELINE ESTIMATION LOGIC:**
+   - **Timeline:** Standard Custom Web = 4-6 Weeks. Mobile Apps = 10-14 Weeks. AI Platforms = 20-30 Weeks.
+   - **Budget:** - Simple Websites: ₹70,000 - ₹1,50,000 INR.
+     - Custom Apps/MVPs: ₹3,00,000 - ₹8,00,000 INR.
+     - Enterprise AI/SaaS: ₹15,00,000 - ₹25,00,000+ INR.
+   - *Note: Adjust currency based on the client's apparent location (USD for global, INR for India).*
+
+**3. REQUIRED JSON STRUCTURE & FORMATTING:**
+   - Return ONLY a valid JSON object.
+   - Use the specific keys provided below.
+   - **Crucial:** Inside the JSON strings, use Markdown formatting (\`\\n\` for line breaks, \`###\` for headers, \`-\` for bullet points) to ensure the output looks like a professional document when rendered.
+
+**JSON OUTPUT SCHEMA:**
+{
+  "projectName": "String (A professional, catchy title, e.g., 'Talentronaut: AI-Driven CRM Suite')",
+  "projectOverview": "String (Min 100 words. Start with 'Talentronaut proposes to develop...' Explain the business value, target audience, and core problem solved.)",
+  "scopeOfWork": "String (This is the most important section. USE MARKDOWN. Break into '### Phase 1' or '### Module A'. List specific features like 'User Authentication', 'Payment Integration', 'Admin Panel'. Be extremely detailed.)",
+  "timeline": "String (e.g., '12-14 Weeks Total\\n- Discovery: 2 Weeks\\n- Design: 3 Weeks\\n- Dev: 6 Weeks\\n- QA: 2 Weeks')",
+  "technologies": "String (List the Stack. Preferred Talentronaut Stack: Frontend: React.js/Next.js/Flutter. Backend: Node.js/Python. DB: MongoDB/PostgreSQL. Cloud: AWS/Azure.)",
+  "investment": "String (Provide a realistic range. e.g., '₹5,00,000 - ₹7,00,000 INR' or '$8,000 - $12,000 USD'. Mention 'Includes 1 year server maintenance' if applicable.)",
+  "paymentTerms": "String (Strictly use: '50% Advance to Initiate', '50% After Project Completion'.)",
+  "deliverables": "String (List each item with a description. e.g. '- **Mobile App**: Cross-platform Flutter app...'. Include: Source Code, Admin Rights, Documentation, Post-launch Support.)"
+}
 `;
 
+export async function POST(req: Request) {
+  try {
+    const formData = await req.formData();
+    const description = formData.get('description') as string;
+    const file = formData.get('file') as File | null;
+    const category = formData.get('category') as string;
+    const country = formData.get('country') as string;
 
-        const userPrompt = `
-      Project Type: ${serviceType}
-      Description: ${description}
-      Attached File Content: ${fileContent.slice(0, 5000)} // Truncate to avoid context limits if text is huge
-    `;
+    let fileContent = "";
 
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userPrompt },
-            ],
-            response_format: { type: "json_object" },
-        });
+    if (file) {
+      console.log(`Processing file: ${file.name} (${file.type})`);
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
 
-        const responseContent = completion.choices[0].message.content;
-        const analysisData = JSON.parse(responseContent || '{}');
-
-        console.log("AI Analysis Response:", JSON.stringify(analysisData, null, 2));
-
-        return NextResponse.json(analysisData);
-
-    } catch (error) {
-        console.error('AI Analysis Failed:', error);
-        return NextResponse.json(
-            { error: 'Failed to analyze project' },
-            { status: 500 }
-        );
+      if (file.type === "application/pdf") {
+        try {
+          fileContent = await parsePdf(buffer);
+          console.log("PDF parsed successfully, length:", fileContent.length);
+        } catch (error) {
+          console.error("PDF Parse Error:", error);
+          return NextResponse.json(
+            { error: "Failed to read PDF file" },
+            { status: 400 }
+          );
+        }
+      } else {
+        // Text or Word (basic text extraction for now)
+        // For .doc/.docx, we might need other, but assuming text-based for now or basic read
+        fileContent = buffer.toString('utf-8');
+      }
     }
+
+    // Construct User Prompt
+    let userPrompt = `Project Description:\n${description}\n`;
+    if (category) userPrompt += `Service Category: ${category}\n`;
+    if (country) userPrompt += `Client Country: ${country}\n`;
+    if (fileContent) {
+      userPrompt += `\nProject Document Content:\n${fileContent.slice(0, 20000)}`; // Limit token usage
+    }
+
+    console.log("Sending prompt to OpenAI...");
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const result = completion.choices[0].message.content;
+
+    if (!result) {
+      throw new Error("Empty response from AI");
+    }
+
+    const parsedResult = JSON.parse(result);
+    return NextResponse.json(parsedResult);
+
+  } catch (error) {
+    console.error("Analysis API Error:", error);
+    return NextResponse.json(
+      { error: "Failed to analyze project", details: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
+  }
 }

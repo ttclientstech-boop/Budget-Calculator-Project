@@ -26,7 +26,7 @@ import {
 
 import jsPDF from "jspdf";
 import { useState, useRef, useEffect } from "react";
-import PdfReport from "@/components/analysis/PdfReport";
+import PdfReport from "@/components/analysis/PDFReport";
 
 export default function AnalysisPage() {
     const [isExporting, setIsExporting] = useState(false);
@@ -68,57 +68,14 @@ export default function AnalysisPage() {
                     flag: "🇺🇸"
                 },
                 analysis: {
-                    projectUnderstanding: {
-                        summary: "The client aims to build a comprehensive SaaS platform for project management. The goal is to streamline collaboration and improve productivity for remote teams.",
-                        businessObjectives: ["Increase team efficiency", "Centralize project tracking", "Enable real-time collaboration"],
-                        targetUsers: ["Project Managers", "Remote Teams", "Freelancers"],
-                        keyChallenges: ["Data synchronization", "Scalability", "User adoption"]
-                    },
-                    executionApproach: {
-                        overallStrategy: "We will adopt an Agile methodology, delivering features in 2-week sprints. This allows for continuous feedback and adaptation.",
-                        developmentMethodology: "Agile / Scrum",
-                        communicationAndReporting: "Weekly progress reports and daily stand-ups via Slack/Teams."
-                    },
-                    technicalArchitecture: {
-                        frontendApproach: "Next.js for a performant, SEO-friendly responsive UI.",
-                        backendApproach: "Node.js microservices for scalability and ease of maintenance.",
-                        databaseApproach: "PostgreSQL for relational data and Redis for caching.",
-                        infrastructureAndDeployment: "AWS (ECS, RDS, S3) with CI/CD via GitHub Actions.",
-                        securityConsiderations: ["JWT Authentication", "Role-Based Access Control (RBAC)", "Data Encryption at Rest"]
-                    },
-                    featureExecutionPlan: [
-                        {
-                            featureName: "User Authentication",
-                            implementationDetails: "Secure login/signup using NextAuth.js with social providers.",
-                            dependencies: ["Database Setup"]
-                        },
-                        {
-                            featureName: "Project Dashboard",
-                            implementationDetails: "Kanban board and list views with drag-and-drop functionality.",
-                            dependencies: ["User Authentication", "API Layer"]
-                        }
-                    ],
-                    projectPhases: [
-                        {
-                            phaseName: "Discovery",
-                            activities: ["Requirement Analysis", "Tech Stack Selection"],
-                            deliverables: ["SRS Document", "Architecture Diagram"]
-                        },
-                        {
-                            phaseName: "Development",
-                            activities: ["Frontend Implementation", "Backend API Development"],
-                            deliverables: ["MVP Release", "Source Code"]
-                        }
-                    ],
-                    assumptionsAndFlexibility: {
-                        assumptions: ["Client provides brand assets", "Third-party APIs are stable"],
-                        technologyFlexibility: "We are flexible to switch to Python/Django if data science features are prioritized."
-                    },
-                    highLevelEstimation: {
-                        complexity: "High",
-                        estimatedTimeline: "12-14 Weeks",
-                        estimationNotes: "Timeline depends on final scope approval."
-                    }
+                    projectName: "SaaS Project Manager",
+                    projectOverview: "The client aims to build a comprehensive SaaS platform for project management. The goal is to streamline collaboration and improve productivity for remote teams.\nKey objectives include centralized tracking, real-time updates, and automated reporting.",
+                    scopeOfWork: "Phase 1: Discovery & Design\n- Requirement gathering\n- UI/UX Wireframes\n\nPhase 2: MVP Development\n- User Authentication\n- Task Management Board\n- Basic Reporting\n\nPhase 3: Testing & Launch\n- QA Testing\n- Deployment to AWS\n- User Training",
+                    timeline: "Total Duration: 12-14 Weeks\n- Discovery: 2 Weeks\n- Design: 3 Weeks\n- Development: 8 Weeks\n- UAT & Launch: 1 Week",
+                    technologies: "Frontend: Next.js, Tailwind CSS\nBackend: Node.js, Express\nDatabase: PostgreSQL\nCloud: AWS (EC2, S3, RDS)",
+                    investment: "Total Estimated Cost: $15,000 - $20,000\n- Design: $3,000\n- Development: $12,000\n- Deployment & Support: $3,000",
+                    paymentTerms: "50% Advance to Initiate\n50% After Project Completion",
+                    deliverables: "1. **Source Code Repository**: Complete ownership of Github repository with full version history.\n2. **Admin Dashboard**: Web-based control panel to manage users, content, and analytics.\n3. **User Application**: Fully functional mobile/web app deployed to production.\n4. **Technical Documentation**: Architecture diagrams, API references, and setup guides.\n5. **3 Months Support**: Priority bug fixing and server monitoring post-launch."
                 }
             });
         }, 1000); // Reduced delay for better UX if fallback is needed
