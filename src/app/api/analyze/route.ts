@@ -1,43 +1,22 @@
 
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import * as pdflib from 'pdf-parse';
-
-// @ts-ignore
-const pdf = pdflib.default || pdflib;
-
 // Initialize OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Helper for PDF parsing to handle ESM/CommonJS quirks if needed
 async function parsePdf(buffer: Buffer) {
-  let pdfFunc = pdf;
-  // @ts-ignore
-  if (typeof pdfFunc !== 'function' && pdfFunc.default) {
+  try {
     // @ts-ignore
-    pdfFunc = pdfFunc.default;
+    // @ts-ignore
+    const pdf = require('pdf-parse/lib/pdf-parse');
+    const data = await pdf(buffer);
+    return data.text;
+  } catch (error) {
+    console.error('PDF Parsing failed:', error);
+    throw error;
   }
-  // Check if it's the class-based v2 or function-based v1
-  // @ts-ignore
-  const pdfModule = await import('pdf-parse');
-  const PDFParse = pdfModule.default?.PDFParse || pdfModule.PDFParse || pdfModule.default;
-
-  // Try new class-based approach first if available
-  if (typeof PDFParse === 'function' && PDFParse.prototype && PDFParse.prototype.getText) {
-    try {
-      const parser = new PDFParse({ data: buffer });
-      const result = await parser.getText();
-      await parser.destroy();
-      return result.text;
-    } catch (e) {
-      console.log("PDF Class parse failed, trying fallback", e);
-    }
-  }
-
-  // Fallback to function call (v1 style)
-  return (await pdfFunc(buffer)).text;
 }
 
 const systemPrompt = `You are the **Senior Technical Architect and Project Manager** at **Talentronaut Technologies**, a premium full-stack software development agency.

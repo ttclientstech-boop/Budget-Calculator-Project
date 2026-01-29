@@ -182,6 +182,7 @@ export default function ProjectForm() {
                                 </span>
                             </div>
                             <textarea
+                                suppressHydrationWarning
                                 {...register("description")}
                                 rows={8}
                                 placeholder="Describe your project requirements, goals, and target audience in detail..."
@@ -203,6 +204,7 @@ export default function ProjectForm() {
                                 </label>
                                 <div className="relative group">
                                     <select
+                                        suppressHydrationWarning
                                         {...register("category")}
                                         className="flex h-14 w-full items-center justify-between rounded-xl border-2 border-transparent bg-secondary/30 px-4 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus:border-primary/50 focus:bg-background focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50 appearance-none transition-all duration-300 hover:bg-secondary/50"
                                     >
@@ -230,6 +232,7 @@ export default function ProjectForm() {
                                     Country
                                 </label>
                                 <input
+                                    suppressHydrationWarning
                                     {...register("country")}
                                     type="text"
                                     placeholder="e.g. United States"
@@ -278,13 +281,13 @@ export default function ProjectForm() {
                                     <div className="bg-green-100 dark:bg-green-900 p-1.5 rounded-full">
                                         <CheckCircle2 className="w-4 h-4 text-green-600" />
                                     </div>
-                                    <span className="text-sm font-medium text-foreground">{watch("file")[0].name}</span>
+                                    <span className="text-sm font-medium text-foreground">{watch("file")?.[0]?.name}</span>
                                 </div>
                             )}
 
                             {errors.file && (
                                 <p className="text-sm text-destructive flex items-center gap-1 font-medium animate-in slide-in-from-left-1">
-                                    <AlertCircle className="w-4 h-4" /> {errors.file?.message as string}
+                                    <AlertCircle className="w-4 h-4" /> {(errors.file?.message as string) || "File error"}
                                 </p>
                             )}
                         </div>
@@ -292,6 +295,7 @@ export default function ProjectForm() {
                         <div className="pt-8">
                             <button
                                 type="submit"
+                                suppressHydrationWarning
                                 disabled={isSubmitting} // NOTE: isSubmitting controls the modal submit state, so here we might not need to disable if we aren't submitting yet? 
                                 // actually, onProjectSubmit is synchronous, so we don't need a loading state on this button anymore unless we want to simulate pre-processing.
                                 className="w-full inline-flex h-14 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground shadow-xl transition-all hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
