@@ -45,7 +45,7 @@ export default function HeroSection() {
                         className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground font-sans leading-[1.1] max-w-4xl"
                     >
                         <span className="block text-foreground">Turn Project Idea into</span>
-                        <span className="bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent pb-2 block mt-1">
+                        <span className="bg-gradient-to-r from-primary via-orange-500 to-red-500 bg-clip-text text-transparent pb-2 block mt-1">
                             Structured Scope, Insights, & Cost Clarity.
                         </span>
                     </motion.h1>

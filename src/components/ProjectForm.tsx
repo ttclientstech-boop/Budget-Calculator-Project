@@ -328,7 +328,7 @@ export default function ProjectForm() {
                                 type="submit"
                                 suppressHydrationWarning
                                 disabled={isSubmitting}
-                                className="w-full inline-flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-primary to-purple-600 px-8 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:opacity-90 hover:shadow-primary/25 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                                className="w-full inline-flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-primary via-orange-500 to-red-500 px-8 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:opacity-90 hover:shadow-primary/25 hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                             >
                                 Request Estimate
                             </button>
