@@ -163,7 +163,7 @@ export default function ProjectForm() {
     };
 
     return (
-        <section id="project-form" className="relative flex items-start justify-center pt-8 pb-32 w-full">
+        <section id="project-form" className="relative flex items-start justify-center pb-32 w-full">
 
             {/* Contact Modal Integration */}
             <ContactModal
@@ -180,17 +180,8 @@ export default function ProjectForm() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-50px" }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="p-6 md:p-10 relative overflow-hidden max-w-4xl mx-auto bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl"
+                    className="p-6 md:p-10 relative overflow-hidden max-w-4xl mx-auto bg-white backdrop-blur-xl border border-gray-100 shadow-2xl rounded-3xl"
                 >
-                    <div className="text-center mb-8">
-                        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground font-sans">
-                            Start Your Project
-                        </h2>
-                        <p className="mt-2 text-muted-foreground text-sm md:text-base max-w-xl mx-auto">
-                            Fill in the details below to get a comprehensive project analysis and budget estimate.
-                        </p>
-                    </div>
-
                     <form onSubmit={handleSubmit(onProjectSubmit)} className="space-y-8">
 
                         {/* 1. Project Description (Required) */}
