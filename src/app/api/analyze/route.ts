@@ -1,14 +1,12 @@
 
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 async function parsePdf(buffer: Buffer) {
   try {
-    // @ts-ignore
     // @ts-ignore
     const pdf = require('pdf-parse/lib/pdf-parse');
     const data = await pdf(buffer);
@@ -74,8 +72,6 @@ export async function POST(req: Request) {
           );
         }
       } else {
-        // Text or Word (basic text extraction for now)
-        // For .doc/.docx, we might need other, but assuming text-based for now or basic read
         fileContent = buffer.toString('utf-8');
       }
     }
@@ -88,24 +84,25 @@ export async function POST(req: Request) {
       userPrompt += `\nProject Document Content:\n${fileContent.slice(0, 20000)}`; // Limit token usage
     }
 
-    console.log("Sending prompt to OpenAI...");
+    console.log("Sending prompt to Gemini...");
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      response_format: { type: "json_object" },
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      systemInstruction: systemPrompt,
+      generationConfig: {
+        responseMimeType: "application/json",
+      },
     });
 
-    const result = completion.choices[0].message.content;
+    const result = await model.generateContent(userPrompt);
+    const response = await result.response;
+    const text = response.text();
 
-    if (!result) {
+    if (!text) {
       throw new Error("Empty response from AI");
     }
 
-    const parsedResult = JSON.parse(result);
+    const parsedResult = JSON.parse(text);
     return NextResponse.json(parsedResult);
 
   } catch (error) {

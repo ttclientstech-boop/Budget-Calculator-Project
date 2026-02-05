@@ -18,9 +18,12 @@ import {
   CheckCircle2,
   Shield,
   TrendingUp,
-  Globe
+  Globe,
+  MessageCircle,
+  Phone
 } from 'lucide-react';
 import ProjectForm from "@/components/ProjectForm";
+import ContactModal, { ContactFormValues } from "@/components/ContactModal";
 import { section } from 'framer-motion/client';
 import { WebDevIcon, MobileIcon, BlockchainIcon, AIIcon, SaasIcon } from "@/components/ServiceIcons";
 
@@ -96,9 +99,43 @@ const TestimonialCard = ({ name, role, company, content, rating, image }: { name
 export default function BudgetCalculatorFunnel() {
   const formRef = useRef<HTMLElement>(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 500], [0, 150]);
   const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
+
+  // Request to Call State
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [isCallSuccess, setIsCallSuccess] = useState(false);
+  const [isCallSubmitting, setIsCallSubmitting] = useState(false);
+
+  const handleRequestCallSubmit = async (data: ContactFormValues) => {
+    setIsCallSubmitting(true);
+    try {
+      // Simulate API call or reuse existing lead capture
+      const leadPayload = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        projectDescription: "Request to Call",
+        domain: "N/A",
+        country: "N/A",
+      };
+
+      await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(leadPayload),
+      });
+
+      setIsCallSuccess(true);
+    } catch (error) {
+      console.error("Failed to submit request:", error);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setIsCallSubmitting(false);
+    }
+  };
 
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -106,20 +143,14 @@ export default function BudgetCalculatorFunnel() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const handleWatchDemo = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.muted = false;
-      videoRef.current.play();
-    }
-  };
-
   const handleVideoClick = () => {
     if (videoRef.current) {
       if (videoRef.current.paused) {
         videoRef.current.play();
+        setIsPlaying(true);
       } else {
         videoRef.current.pause();
+        setIsPlaying(false);
       }
     }
   };
@@ -154,17 +185,17 @@ export default function BudgetCalculatorFunnel() {
 
   const testimonials = [
     {
-      name: 'Sarah Chen',
-      role: 'CTO',
-      company: 'TechVentures',
-      content: 'The budget estimate was within 5% of our final project cost. This tool saved us weeks of back-and-forth.',
+      name: 'Ankush Jain',
+      role: 'COO',
+      company: 'QuantumBridge',
+      content: 'Their SaaS expertise is top-tier. From design to DevOps, they delivered an MVP that helped us raise funding in 60 days.',
       rating: 5
     },
     {
-      name: 'Marcus Johnson',
-      role: 'Founder',
-      company: 'StartupLab',
-      content: 'As a non-technical founder, understanding project costs was a mystery. Talentronaut made everything crystal clear.',
+      name: 'Priya Malhotra',
+      role: 'CTO',
+      company: 'Nexora Technologies',
+      content: 'They didn’t just develop our platform; they built a business engine that scales intelligently',
       rating: 5
     },
     {
@@ -195,13 +226,13 @@ export default function BudgetCalculatorFunnel() {
             {/* Left Content */}
             <motion.div
               style={{ y: heroY, opacity: heroOpacity }}
-              className="max-w-3xl"
+              className="max-w-3xl mx-auto lg:mx-0 text-center lg:text-left"
             >
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6 }}
-                className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/50 shadow-sm mb-6"
+                className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/50 shadow-sm mb-6 mx-auto lg:mx-0"
               >
                 <div className="relative h-6 w-6">
                   <Image
@@ -211,7 +242,7 @@ export default function BudgetCalculatorFunnel() {
                     className="object-contain"
                   />
                 </div>
-                <span className="text-sm font-semibold text-gray-800 tracking-wide uppercase">Talentronaut Estimation Engine</span>
+                <span className="text-sm font-semibold text-gray-800 tracking-wide uppercase whitespace-nowrap">Talentronaut Estimation Engine</span>
               </motion.div>
 
               <motion.h1
@@ -239,7 +270,7 @@ export default function BudgetCalculatorFunnel() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
-                className="flex flex-col sm:flex-row gap-5"
+                className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start"
               >
                 <button suppressHydrationWarning
                   onClick={scrollToForm}
@@ -251,13 +282,16 @@ export default function BudgetCalculatorFunnel() {
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </button>
+
                 <button
-                  onClick={handleWatchDemo}
                   suppressHydrationWarning
-                  className="flex items-center justify-center gap-3 px-8 py-4 bg-white/50 backdrop-blur-sm border border-white/60 text-gray-800 rounded-2xl font-bold text-lg hover:bg-white transition-colors duration-300"
+                  onClick={() => setIsCallModalOpen(true)}
+                  className="group relative px-8 py-4 bg-white text-gray-900 rounded-2xl font-bold text-lg shadow-lg/50 overflow-hidden hover:scale-105 transition-transform duration-300 border border-gray-200 hover:border-orange-200"
                 >
-                  <Play className="w-5 h-5 fill-current" />
-                  Watch Demo
+                  <span className="relative flex items-center gap-3">
+                    <Phone className="w-5 h-5 text-gray-600 group-hover:text-orange-600 transition-colors" />
+                    Request to Call
+                  </span>
                 </button>
               </motion.div>
 
@@ -268,19 +302,19 @@ export default function BudgetCalculatorFunnel() {
               initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative block mt-16 lg:mt-0"
+              className="relative block mt-8 lg:mt-0"
             >
               <div className="relative z-10 w-full aspect-video max-w-lg mx-auto bg-gradient-to-tr from-gray-900 via-gray-800 to-black rounded-[2rem] p-3 shadow-2xl shadow-orange-900/20 border border-gray-700/50">
                 {/* Video Container */}
                 <div className="w-full h-full bg-slate-950 rounded-[1.5rem] overflow-hidden relative group">
-                  <div className="absolute inset-0 bg-black/20 z-10 group-hover:bg-transparent transition-colors duration-300 pointer-events-none" />
+                  <div className={`absolute inset-0 bg-black/20 z-10 transition-colors duration-300 pointer-events-none ${isPlaying ? 'bg-transparent' : 'group-hover:bg-transparent'}`} />
 
                   {/* Placeholder Video - Replace src with actual demo video */}
                   <video
                     ref={videoRef}
                     className="w-full h-full object-cover cursor-pointer"
                     poster="/images/dashboard-preview.jpg"
-                    muted
+                    muted={false}
                     loop
                     playsInline
                     onClick={handleVideoClick}
@@ -289,8 +323,10 @@ export default function BudgetCalculatorFunnel() {
                     Your browser does not support the video tag.
                   </video>
 
-                  {/* Play Button Overlay (Optional) */}
-                  <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                  {/* Play Button Overlay */}
+                  <div
+                    className={`absolute inset-0 flex items-center justify-center z-20 pointer-events-none transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}
+                  >
                     <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 shadow-lg group-hover:scale-110 transition-transform duration-300">
                       <Play className="w-6 h-6 text-white fill-current ml-1" />
                     </div>
@@ -319,9 +355,113 @@ export default function BudgetCalculatorFunnel() {
 
         {/* Wave Divider */}
         <div className="absolute bottom-0 left-0 right-0">
-          <svg className="fill-white" viewBox="0 0 1440 100">
+          <svg className="fill-slate-900" viewBox="0 0 1440 100">
             <path d="M0,32L80,37.3C160,43,320,53,480,58.7C640,64,800,64,960,53.3C1120,43,1280,21,1360,10.7L1440,0L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"></path>
           </svg>
+        </div>
+      </section>
+
+      {/* ============ CALCULATOR SECTION ============ */}
+      <section ref={formRef} className="py-24 relative">
+        <div className="absolute inset-0 bg-slate-900">
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"></div>
+        </div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-32 relative z-10">
+          <div className="flex flex-col-reverse lg:grid lg:grid-cols-12 gap-12 items-start">
+
+            {/* Form Info Left */}
+            <div className="lg:col-span-4 lg:sticky lg:top-32 text-white text-center lg:text-left">
+              <FadeIn>
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-8 shadow-2xl shadow-orange-500/20 mx-auto lg:mx-0">
+                  <div className="relative w-10 h-10">
+                    <Image
+                      src="/images/newlogo.png"
+                      alt="Talentronaut Logo"
+                      fill
+                      className="object-contain brightness-0 invert"
+                    />
+                  </div>
+                </div>
+                <h2 className="text-4xl font-bold mb-6 text-white">
+                  Let's Build Something <span className="text-orange-400">Extraordinary</span>
+                </h2>
+                <p className="text-lg text-orange-100 max-w-2xl mx-auto lg:mx-0">
+                  Fill in the details below. Talentronaut makes budget calculation easy for you.
+                </p>
+                <div className="space-y-6">
+                  {[
+                    "Instant Quote Generation",
+                    "Detailed Phase Breakdown",
+                    "Market Rate Comparison",
+                    "Timeline Estimation"
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-4 text-gray-300 justify-center lg:justify-start">
+                      <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                        <CheckCircle2 className="w-4 h-4 text-green-400" />
+                      </div>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Direct Connect - Desktop Only */}
+                <div className="hidden lg:block mt-12 bg-white/10 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
+                  <p className="text-gray-300 text-sm mb-4">
+                    Don't have all the details handy? No worries.
+                  </p>
+                  <a
+                    href="https://wa.me/918220324802"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-green-900/20 hover:-translate-y-1 w-full justify-center"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    <span>Direct Connect</span>
+                  </a>
+                </div>
+
+              </FadeIn>
+            </div>
+
+            {/* Form Container Right */}
+            <div className="lg:col-span-8">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-1 shadow-2xl"
+              >
+                <div className="bg-white rounded-[1.25rem] overflow-hidden pt-10">
+                  <ProjectForm />
+                </div>
+              </motion.div>
+
+              {/* Direct Connect / Disclaimer Section - Mobile Only */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="mt-8 text-center lg:hidden"
+              >
+                <p className="text-gray-400 text-sm mb-4">
+                  Don't have all the details handy? No worries.
+                </p>
+                <a
+                  href="https://wa.me/918220324802"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-green-900/20 hover:-translate-y-1"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  <span>Direct Connect</span>
+                </a>
+              </motion.div>
+            </div>
+
+          </div>
         </div>
       </section>
 
@@ -349,72 +489,6 @@ export default function BudgetCalculatorFunnel() {
         {/* Decorative Blobs */}
         <div className="absolute top-1/2 left-0 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-50 -translate-x-1/2" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-orange-100 rounded-full blur-3xl opacity-50 translate-x-1/2" />
-      </section>
-
-      {/* ============ CALCULATOR SECTION ============ */}
-      <section ref={formRef} className="py-24 relative">
-        <div className="absolute inset-0 bg-slate-900">
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"></div>
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-        </div>
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-32 relative z-10">
-          <div className="grid lg:grid-cols-12 gap-12 items-start">
-
-            {/* Form Info Left */}
-            <div className="lg:col-span-4 lg:sticky lg:top-32 text-white">
-              <FadeIn>
-                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-8 shadow-2xl shadow-orange-500/20">
-                  <div className="relative w-10 h-10">
-                    <Image
-                      src="/images/newlogo.png"
-                      alt="Talentronaut Logo"
-                      fill
-                      className="object-contain brightness-0 invert"
-                    />
-                  </div>
-                </div>
-                <h2 className="text-4xl font-bold mb-6 text-white">
-                  Let's Build Something <span className="text-orange-400">Extraordinary</span>
-                </h2>
-                <p className="text-lg text-orange-100 max-w-2xl mx-auto">
-                  Fill in the details below. Talentronaut makes budget calculation easy for you.
-                </p>
-                <div className="space-y-6">
-                  {[
-                    "Instant Quote Generation",
-                    "Detailed Phase Breakdown",
-                    "Market Rate Comparison",
-                    "Timeline Estimation"
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-4 text-gray-300">
-                      <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                        <CheckCircle2 className="w-4 h-4 text-green-400" />
-                      </div>
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </FadeIn>
-            </div>
-
-            {/* Form Container Right */}
-            <div className="lg:col-span-8">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-1 shadow-2xl"
-              >
-                <div className="bg-white rounded-[1.25rem] overflow-hidden pt-10">
-                  <ProjectForm />
-                </div>
-              </motion.div>
-            </div>
-
-          </div>
-        </div>
       </section>
 
       {/* ============ TESTIMONIALS SECTION ============ */}
@@ -466,6 +540,25 @@ export default function BudgetCalculatorFunnel() {
           </div>
         </div>
       </footer>
+
+      {/* Request to Call Modal */}
+      <ContactModal
+        isOpen={isCallModalOpen}
+        onClose={() => {
+          setIsCallModalOpen(false);
+          // Reset success state after closing if needed, or keep it to show success if opened again (optional, usually reset)
+          if (isCallSuccess) {
+            setTimeout(() => setIsCallSuccess(false), 300); // Delay reset to allow exit animation
+          }
+        }}
+        onSubmit={handleRequestCallSubmit}
+        isSubmitting={isCallSubmitting}
+        title="Request a Call"
+        description="Leave your details and we'll connect with you shortly."
+        isSuccess={isCallSuccess}
+        successMessage="Thank you for connect. We will connect you soon."
+      />
+
     </div>
   );
 }

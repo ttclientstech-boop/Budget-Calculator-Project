@@ -163,7 +163,7 @@ export default function ProjectForm() {
     };
 
     return (
-        <section id="project-form" className="relative flex items-start justify-center pb-32 w-full">
+        <section id="project-form" className="relative flex items-start justify-center pb-16 w-full">
 
             {/* Contact Modal Integration */}
             <ContactModal

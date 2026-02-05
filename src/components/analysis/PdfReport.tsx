@@ -22,7 +22,8 @@ import {
     Lock,
     Rocket,
     CreditCard,
-    Briefcase
+    Briefcase,
+    MapPin
 } from "lucide-react";
 import React, { forwardRef } from "react";
 
@@ -218,31 +219,21 @@ const PdfReport = forwardRef<HTMLDivElement, PDFReportProps>(({
 
     // A4 Aspect Ratio Container Style
     // A4 is 210mm x 297mm. At 96 DPI, that's approx 794px x 1123px.
-    const pageStyle = "w-[794px] h-[1123px] bg-[#fffcfb] relative overflow-hidden flex flex-col shadow-lg mb-8 mx-auto print-page origin-top-left font-serif text-[#434d5b]";
+    const basePageStyle = "w-[794px] bg-[#fffcfb] relative flex flex-col shadow-lg mb-8 mx-auto print-page origin-top-left font-serif text-[#434d5b]";
+
+    // Fixed A4 Page (Cover, Profile, etc.)
+    const fixedPageStyle = `${basePageStyle} h-[1123px] overflow-hidden`;
+
+    // Dynamic Page (Content can vary) - Removed min-h-[1123px] constraint to auto-fit content
+    // Added min-h-[600px] just to maintain some 'paper' feel even if empty
+    const dynamicPageStyle = `${basePageStyle} min-h-[600px] h-auto`;
+
     const contentPadding = "px-12 py-12 flex-1 flex flex-col"; // Increased padding for document feel
-
-    // --- PAGINATION LOGIC FOR SCOPE OF WORK ---
-    const scopeLines = analysisData.scopeOfWork ? analysisData.scopeOfWork.split(/\r?\n|\\n/).filter(line => line.trim() !== '') : [];
-
-    // Page 3 capacity: Project Overview is there, so we have less space for Scope.
-    // Increased to 15 to better fill the page as per user feedback.
-    const ITEMS_PER_FIRST_PAGE = 15;
-    // Full Scope Page capacity: Increased to 25 to utilize full A4 height.
-    const ITEMS_PER_FULL_PAGE = 25;
-
-    const firstScopeChunk = scopeLines.slice(0, ITEMS_PER_FIRST_PAGE);
-    const remainingScopeLines = scopeLines.slice(ITEMS_PER_FIRST_PAGE);
-
-    // Split remaining lines into chunks for dedicated pages
-    const scopeChunks = [];
-    for (let i = 0; i < remainingScopeLines.length; i += ITEMS_PER_FULL_PAGE) {
-        scopeChunks.push(remainingScopeLines.slice(i, i + ITEMS_PER_FULL_PAGE));
-    }
 
     return (
         <div ref={ref} className="bg-[#f3f4f6] p-4 md:p-8">
-            {/* --- PAGE 1: COVER PAGE --- */}
-            <div id="pdf-page-1" className={pageStyle}>
+            {/* --- PAGE 1: COVER PAGE (Fixed A4) --- */}
+            <div id="pdf-page-1" className={fixedPageStyle}>
                 {/* Subtle Orange Glows for Light Theme */}
                 <div
                     className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full"
@@ -302,8 +293,8 @@ const PdfReport = forwardRef<HTMLDivElement, PDFReportProps>(({
                 </div>
             </div>
 
-            {/* --- PAGE 2: COMPANY PROFILE --- */}
-            <div id="pdf-page-2" className={pageStyle}>
+            {/* --- PAGE 2: COMPANY PROFILE (Fixed A4) --- */}
+            <div id="pdf-page-2" className={fixedPageStyle}>
                 <div className={contentPadding}>
                     <div className="pb-4 mb-8 border-b border-[#e2e8f0]">
                         <h2 className="text-sm font-bold text-[#94a3b8] uppercase tracking-widest">02 • Company Profile</h2>
@@ -384,14 +375,17 @@ const PdfReport = forwardRef<HTMLDivElement, PDFReportProps>(({
                 </div>
             </div>
 
-            {/* --- PAGE 3: PROJECT OVERVIEW & SCOPE (PART 1) --- */}
-            <div id="pdf-page-3" className={pageStyle}>
+            {/* --- DYNAMIC SECTION: DETAILS, TIMELINE, TECH, COMMERCIALS --- */}
+            {/* This section will grow with content and be exported as a long variable-height page */}
+            <div id="pdf-dynamic-section" className={dynamicPageStyle}>
                 <div className={contentPadding}>
+
+                    {/* SECTION 03: PROJECT DETAILS */}
                     <div className="pb-4 mb-8 border-b border-[#e2e8f0]">
                         <h2 className="text-sm font-bold text-[#94a3b8] uppercase tracking-widest">03 • Project Details</h2>
                     </div>
 
-                    <div className="space-y-10 font-sans">
+                    <div className="space-y-10 font-sans mb-16">
                         {/* Project Overview */}
                         <div>
                             <h3 className="text-[#0f172a] font-bold text-2xl mb-4 font-serif flex items-center gap-3">
@@ -404,65 +398,24 @@ const PdfReport = forwardRef<HTMLDivElement, PDFReportProps>(({
 
                         <hr className="border-[#e2e8f0]" />
 
-                        {/* Scope of Work (Chunk 1) */}
+                        {/* Scope of Work (Full) */}
                         <div>
                             <h3 className="text-[#0f172a] font-bold text-2xl mb-4 font-serif flex items-center gap-3">
                                 Scope of Work
                             </h3>
                             <div className="text-[#334155] text-base leading-7 font-light">
-                                {renderScopeLines(firstScopeChunk)}
+                                {renderScopeLines(analysisData.scopeOfWork ? analysisData.scopeOfWork.split(/\r?\n|\\n/) : [])}
                             </div>
                         </div>
                     </div>
-                    {/* Website Footer */}
-                    <div className="mt-auto pt-8 border-t border-[#e2e8f0] flex justify-center">
-                        <a href="https://www.talentronaut.in/" target="_blank" rel="noopener noreferrer" className="text-[#94a3b8] text-xs font-sans hover:text-[#D94632] transition-colors">
-                            https://www.talentronaut.in
-                        </a>
-                    </div>
-                </div>
-            </div>
 
-            {/* --- PAGE 3+N: DYNAMIC SCOPE PAGES --- */}
-            {scopeChunks.map((chunk, i) => (
-                <div key={`scope-page-${i}`} className={pageStyle}>
-                    <div className={contentPadding}>
-                        <div className="pb-4 mb-8 border-b border-[#e2e8f0]">
-                            <h2 className="text-sm font-bold text-[#94a3b8] uppercase tracking-widest">03 • Project Details (Cont.)</h2>
-                        </div>
 
-                        <div className="font-sans">
-                            {/* Scope of Work (Chunk N) */}
-                            <div>
-                                <h3 className="text-[#0f172a] font-bold text-2xl mb-4 font-serif flex items-center gap-3 opacity-50">
-                                    Scope of Work (Continued)
-                                </h3>
-                                <div className="text-[#334155] text-base leading-7 font-light">
-                                    {renderScopeLines(chunk)}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Website Footer */}
-                        <div className="mt-auto pt-8 border-t border-[#e2e8f0] flex justify-center">
-                            <a href="https://www.talentronaut.in/" target="_blank" rel="noopener noreferrer" className="text-[#94a3b8] text-xs font-sans hover:text-[#D94632] transition-colors">
-                                https://www.talentronaut.in
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            ))}
-
-            {/* --- PAGE 4: TIMELINE & TECHNOLOGY --- */}
-            <div id="pdf-page-4" className={pageStyle}>
-                <div className={contentPadding}>
+                    {/* SECTION 04: PLAN & TECHNOLOGY */}
                     <div className="pb-4 mb-8 border-b border-[#e2e8f0]">
                         <h2 className="text-sm font-bold text-[#94a3b8] uppercase tracking-widest">04 • Plan & Technology</h2>
                     </div>
 
-                    <div className="space-y-10 font-sans">
-
-
+                    <div className="space-y-10 font-sans mb-16">
                         {/* Timeline Table */}
                         <div>
                             <h3 className="text-[#0f172a] font-bold text-2xl mb-4 font-serif">
@@ -489,24 +442,14 @@ const PdfReport = forwardRef<HTMLDivElement, PDFReportProps>(({
                             )}
                         </div>
                     </div>
-                    {/* Website Footer */}
-                    <div className="mt-auto pt-8 border-t border-[#e2e8f0] flex justify-center">
-                        <a href="https://www.talentronaut.in/" target="_blank" rel="noopener noreferrer" className="text-[#94a3b8] text-xs font-sans hover:text-[#D94632] transition-colors">
-                            https://www.talentronaut.in
-                        </a>
-                    </div>
-                </div>
-            </div>
 
-            {/* --- PAGE 5: INVESTMENT & PAYMENT --- */}
-            <div id="pdf-page-5" className={pageStyle}>
-                <div className={contentPadding}>
+
+                    {/* SECTION 05: COMMERCIALS */}
                     <div className="pb-4 mb-8 border-b border-[#e2e8f0]">
                         <h2 className="text-sm font-bold text-[#94a3b8] uppercase tracking-widest">05 • Commercials</h2>
                     </div>
 
-                    <div className="font-sans h-full flex flex-col justify-start space-y-10">
-
+                    <div className="font-sans flex flex-col justify-start space-y-10 mb-16">
                         {/* Investment */}
                         <div>
                             <h3 className="text-[#0f172a] font-bold text-2xl mb-4 font-serif">
@@ -544,25 +487,15 @@ const PdfReport = forwardRef<HTMLDivElement, PDFReportProps>(({
                                 </div>
                             </div>
                         </div>
-
                     </div>
-                    {/* Website Footer */}
-                    <div className="mt-auto pt-8 border-t border-[#e2e8f0] flex justify-center">
-                        <a href="https://www.talentronaut.in/" target="_blank" rel="noopener noreferrer" className="text-[#94a3b8] text-xs font-sans hover:text-[#D94632] transition-colors">
-                            https://www.talentronaut.in
-                        </a>
-                    </div>
-                </div>
-            </div>
 
-            {/* --- PAGE 6: DELIVERABLES --- */}
-            <div id="pdf-page-6" className={pageStyle}>
-                <div className={contentPadding}>
+
+                    {/* SECTION 06: DELIVERABLES */}
                     <div className="pb-4 mb-8 border-b border-[#e2e8f0]">
                         <h2 className="text-sm font-bold text-[#94a3b8] uppercase tracking-widest">06 • Deliverables</h2>
                     </div>
 
-                    <div className="font-sans h-full flex flex-col justify-start space-y-8">
+                    <div className="font-sans flex flex-col justify-start space-y-8 mb-8">
                         <div>
                             <h3 className="text-[#0f172a] font-bold text-2xl mb-6 font-serif">
                                 List of Deliverables
@@ -572,29 +505,23 @@ const PdfReport = forwardRef<HTMLDivElement, PDFReportProps>(({
                             </div>
                         </div>
                     </div>
-                    {/* Website Footer */}
-                    <div className="mt-auto pt-8 border-t border-[#e2e8f0] flex justify-center">
-                        <a href="https://www.talentronaut.in/" target="_blank" rel="noopener noreferrer" className="text-[#94a3b8] text-xs font-sans hover:text-[#D94632] transition-colors">
-                            https://www.talentronaut.in
-                        </a>
-                    </div>
+                </div>
+
+                {/* Website Footer (End of Dynamic Section) */}
+                <div className="pb-12 px-12 border-t border-[#e2e8f0] mt-auto flex justify-center pt-8 bg-[#fffcfb]">
+                    <a href="https://www.talentronaut.in/" target="_blank" rel="noopener noreferrer" className="text-[#94a3b8] text-xs font-sans hover:text-[#D94632] transition-colors">
+                        https://www.talentronaut.in
+                    </a>
                 </div>
             </div>
 
-            {/* --- PAGE 7: GLOBAL PRESENCE --- */}
-            <div id="pdf-page-7" className={pageStyle}>
+
+            {/* --- GLOBAL PRESENCE (Keeping as Fixed Page or could append to dynamic, but usually fits better as standalone end page) --- */}
+            {/* Let's keep it as fixed page 3 (technically 4th rendered block) for impact */}
+            <div id="pdf-page-end" className={fixedPageStyle}>
 
                 {/* Background Pattern - Subtle Building/Abstract feel */}
-                <div className="absolute inset-0 z-0 opacity-5 pointer-events-none select-none overflow-hidden bg-orange-50/50">
-                    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="black" strokeWidth="0.5" />
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill="url(#grid)" />
-                    </svg>
-                </div>
+
 
                 <div className={`${contentPadding} relative z-10 flex flex-col h-full`}>
 
@@ -692,6 +619,95 @@ const PdfReport = forwardRef<HTMLDivElement, PDFReportProps>(({
                         </a>
                     </div>
 
+                </div>
+            </div>
+            {/* --- CONTACT US (New Last Page) --- */}
+            <div id="pdf-page-contact" className={fixedPageStyle}>
+                {/* Background Pattern - Subtle */}
+
+
+                <div className={`${contentPadding} relative z-10 flex flex-col h-full justify-center`}>
+                    {/* Header */}
+                    <div className="mb-12">
+                        <h2 className="text-[#D94632] font-bold text-6xl font-serif mb-4 tracking-tight">Contact Us</h2>
+                        <p className="text-[#64748b] text-xl font-light">We'd love to hear from you.</p>
+                    </div>
+
+                    {/* Contact Details Card */}
+                    <div className="bg-white p-10 rounded-3xl shadow-xl border border-orange-100 mx-8">
+                        <div className="space-y-8">
+                            {/* Website */}
+                            <div className="flex items-center gap-6">
+                                <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center shrink-0">
+                                    <Globe className="w-6 h-6 text-[#D94632]" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-[#94a3b8] uppercase font-bold tracking-wider mb-1">Visit our Website</p>
+                                    <a href="https://www.talentronaut.in/" target="_blank" rel="noopener noreferrer" className="text-xl font-medium text-[#1e293b] hover:text-[#D94632] transition-colors">
+                                        https://www.talentronaut.in/
+                                    </a>
+                                </div>
+                            </div>
+
+                            {/* WhatsApp */}
+                            <div className="flex items-center gap-6">
+                                <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center shrink-0">
+                                    <Smartphone className="w-6 h-6 text-[#D94632]" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-[#94a3b8] uppercase font-bold tracking-wider mb-1">Connect on WhatsApp</p>
+                                    <a href="https://wa.me/918220324802" target="_blank" rel="noopener noreferrer" className="text-xl font-medium text-[#1e293b] hover:text-[#D94632] transition-colors">
+                                        +91 82203 24802
+                                    </a>
+                                </div>
+                            </div>
+
+                            {/* Call */}
+                            <div className="flex items-center gap-6">
+                                <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center shrink-0">
+                                    <Phone className="w-6 h-6 text-[#D94632]" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-[#94a3b8] uppercase font-bold tracking-wider mb-1">Call Us</p>
+                                    <a href="tel:+918220324802" className="text-xl font-medium text-[#1e293b] hover:text-[#D94632] transition-colors">
+                                        +91 82203 24802
+                                    </a>
+                                </div>
+                            </div>
+
+                            {/* Address */}
+                            <div className="flex items-start gap-6">
+                                <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center shrink-0 mt-1">
+                                    <MapPin className="w-6 h-6 text-[#D94632]" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-[#94a3b8] uppercase font-bold tracking-wider mb-1">Address</p>
+                                    <p className="text-lg font-medium text-[#1e293b] leading-relaxed">
+                                        5-49, Maharaja Garden, Bajanai Kovil St,<br />
+                                        Andavar Nagar, Ramapuram,<br />
+                                        Chennai, Tamil Nadu 600089
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Thank You Message */}
+                    <div className="mt-auto mb-16 text-center">
+                        <h1 className="text-7xl font-bold text-[#1e293b] font-serif mb-4" style={{ letterSpacing: '-0.03em' }}>
+                            Thank You!
+                        </h1>
+                        <p className="text-[#64748b] text-xl font-light">
+                            Looking forward to building something amazing together.
+                        </p>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="pt-6 border-t border-[#e2e8f0] flex justify-center">
+                        <a href="https://www.talentronaut.in/" target="_blank" rel="noopener noreferrer" className="text-[#94a3b8] text-xs font-sans hover:text-[#D94632] transition-colors">
+                            https://www.talentronaut.in
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

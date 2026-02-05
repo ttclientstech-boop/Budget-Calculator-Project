@@ -20,7 +20,8 @@ import {
     Mail,
     Phone,
     FileText,
-    ArrowRight
+    ArrowRight,
+    MessageCircle
 } from "lucide-react";
 
 
@@ -100,22 +101,24 @@ export default function AnalysisPage() {
 
         try {
             // dynamic import for better performance
-            const { toPng } = await import('html-to-image');
+            const { toJpeg } = await import('html-to-image');
             const jsPDF = (await import('jspdf')).default;
 
+            // Default A4 dimensions (Portrait, mm)
             const pdf = new jsPDF("p", "mm", "a4");
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const a4Width = pdf.internal.pageSize.getWidth();
+            const a4Height = pdf.internal.pageSize.getHeight();
 
             const pages = printRef.current.querySelectorAll('.print-page');
 
             for (let i = 0; i < pages.length; i++) {
                 const page = pages[i] as HTMLElement;
 
-                // Capture using html-to-image -> usually handles CSS transforms/filters better
-                const imgData = await toPng(page, {
-                    quality: 1.0,
-                    pixelRatio: 2,
+                // Capture using html-to-image
+                // Using JPEG with 0.8 quality and 1.5 pixel ratio for optimal size (< 5MB)
+                const imgData = await toJpeg(page, {
+                    quality: 0.8,
+                    pixelRatio: 1.5,
                     backgroundColor: "#ffffff"
                 });
 
@@ -123,12 +126,35 @@ export default function AnalysisPage() {
                 const imgWidth = imgProps.width;
                 const imgHeight = imgProps.height;
 
-                // 1:1 A4 Match
-                const ratio = pdfWidth / imgWidth;
+                // Determine Render Dimensions
+                // We fit the image width to the A4 width
+                const ratio = a4Width / imgWidth;
                 const renderHeight = imgHeight * ratio;
 
-                if (i > 0) pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, renderHeight);
+                // If it's the first page, we don't need to add a page (it's created by default)
+                // But if the default page exists and we are at i > 0, we add a new one.
+                // For the "Dynamic Section" (which might be taller than A4), we need to set the page height explicitly.
+
+                if (i > 0) {
+                    // Check if this page needs a custom height (Dynamic Section)
+                    if (renderHeight > a4Height) {
+                        // Add a page with custom dimensions [width, height] in mm
+                        // Note: jsPDF addPage takes (format) or (width, height, units) depending on usage.
+                        // For custom size: addPage([width, height])
+                        pdf.addPage([a4Width, renderHeight]);
+                    } else {
+                        pdf.addPage("a4", "p");
+                    }
+                }
+
+                // If it's the first page and it's custom height (unlikely for cover, but good for safety)
+                if (i === 0 && renderHeight > a4Height) {
+                    // The document is initialized as A4. If first page is custom, we might need to resize the init page
+                    // or just live with it (Cover is typically A4).
+                    // For now, assuming Cover is always A4.
+                }
+
+                pdf.addImage(imgData, 'JPEG', 0, 0, a4Width, renderHeight);
             }
 
             pdf.save(`Talentronaut_Project_Analysis_${clientData.name.replace(/\s+/g, '_')}.pdf`);
@@ -156,14 +182,46 @@ export default function AnalysisPage() {
                             <p className="text-xs text-muted-foreground hidden md:block">Reference ID: #PROJ-2024-8832</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button className="hidden md:flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900">
-                            <Phone size={16} /> Contact Support
-                        </button>
+                    <div className="flex items-center gap-2 md:gap-3">
+                        {/* 1. Visit Web Application */}
+                        <a
+                            href="https://www.talentronaut.in/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hidden md:flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#D94632] transition-colors p-2 hover:bg-orange-50 rounded-lg"
+                            title="Visit Website"
+                        >
+                            <Globe size={18} />
+                            <span className="hidden lg:inline">Visit Website</span>
+                        </a>
+
+                        {/* 2. Connect on Whatsapp */}
+                        <a
+                            href="https://wa.me/918220324802"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-green-600 transition-colors p-2 hover:bg-green-50 rounded-lg"
+                            title="Connect on WhatsApp"
+                        >
+                            <MessageCircle size={18} />
+                            <span className="hidden lg:inline">WhatsApp</span>
+                        </a>
+
+                        {/* 3. Request the Call */}
+                        <a
+                            href="tel:+918220324802"
+                            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-lg"
+                            title="Call Us"
+                        >
+                            <Phone size={18} />
+                            <span className="hidden lg:inline">Call</span>
+                        </a>
+
+                        {/* 4. Export Report (Primary Action) */}
                         <button
                             onClick={handleExportPDF}
                             disabled={isExporting}
-                            className="bg-primary text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-wait shadow-sm"
+                            className="bg-[#D94632] text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-[#b93826] transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-wait shadow-sm ml-2"
                         >
                             {isExporting ? (
                                 <>Processing...</>
@@ -189,7 +247,7 @@ export default function AnalysisPage() {
                             </p>
                         </div>
                     ) : (
-                        <div className="origin-top transform scale-[0.4] xs:scale-[0.5] sm:scale-[0.6] md:scale-[0.8] xl:scale-100 transition-transform duration-300 mb-12">
+                        <div className="[zoom:0.35] xs:[zoom:0.5] sm:[zoom:0.6] md:[zoom:0.8] xl:[zoom:1] transition-all duration-300 mb-12 origin-top">
                             <PdfReport
                                 clientData={clientData}
                                 analysisData={analysisData}
@@ -201,16 +259,18 @@ export default function AnalysisPage() {
 
             {/* --- HIDDEN PRINT TEMPLATE (FULL RESOLUTION) --- */}
             {/* Placed at 0,0 but behind everything (z-50). No opacity to ensure capture works, main bg covers it. */}
-            {reportData && (
-                <div className="fixed top-0 left-0 -z-50 pointer-events-none">
-                    <PdfReport
-                        ref={printRef}
-                        clientData={clientData}
-                        analysisData={analysisData}
-                    />
-                </div>
-            )}
+            {
+                reportData && (
+                    <div className="fixed top-0 left-0 -z-50 pointer-events-none opacity-0">
+                        <PdfReport
+                            ref={printRef}
+                            clientData={clientData}
+                            analysisData={analysisData}
+                        />
+                    </div>
+                )
+            }
 
-        </main>
+        </main >
     );
 }
