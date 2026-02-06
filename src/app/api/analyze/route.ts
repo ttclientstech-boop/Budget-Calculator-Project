@@ -1,6 +1,8 @@
 
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import dbConnect from "@/lib/db";
+import AIUsage from "@/models/AIUsage";
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
@@ -98,9 +100,60 @@ export async function POST(req: Request) {
     const response = await result.response;
     const text = response.text();
 
+
+    // Log for debugging
+    console.log("Gemini Response usage:", response.usageMetadata);
+
     if (!text) {
       throw new Error("Empty response from AI");
     }
+
+    // --- AI Usage Tracking ---
+    try {
+      await dbConnect();
+
+      const usage = response.usageMetadata;
+      if (usage) {
+        const promptTokens = usage.promptTokenCount || 0;
+        const candidatesTokens = usage.candidatesTokenCount || 0;
+        // @ts-ignore - thoughtsTokenCount might not be in the type definition yet
+        const thoughtsTokens = usage.thoughtsTokenCount || 0;
+
+        // Total Output = Candidates + Thoughts (as per user observation that total = p + c + t)
+        const totalOutputTokens = candidatesTokens + thoughtsTokens;
+
+        // Pricing (User provided)
+        // Input: $0.30 per 1M
+        // Output: $2.50 per 1M
+        const inputPrice = 0.30;
+        const outputPrice = 2.50;
+
+        const inputCost = (promptTokens / 1000000) * inputPrice;
+        const outputCost = (totalOutputTokens / 1000000) * outputPrice;
+        const totalCost = inputCost + outputCost;
+
+        // Get client email from formData if available
+        const clientEmail = formData.get('contactEmail') as string || "Unknown";
+
+        await AIUsage.create({
+          model: "gemini-2.5-flash",
+          promptTokenCount: promptTokens,
+          candidatesTokenCount: candidatesTokens,
+          thoughtsTokenCount: thoughtsTokens,
+          totalTokenCount: usage.totalTokenCount || (promptTokens + totalOutputTokens),
+          inputCost: parseFloat(inputCost.toFixed(6)),
+          outputCost: parseFloat(outputCost.toFixed(6)),
+          totalCost: parseFloat(totalCost.toFixed(6)),
+          clientEmail: clientEmail
+        });
+
+        console.log(`AI Usage Tracked: $${totalCost.toFixed(6)}`);
+      }
+    } catch (dbError) {
+      console.error("Failed to track AI usage:", dbError);
+      // We do NOT block the response if tracking fails
+    }
+    // -------------------------
 
     const parsedResult = JSON.parse(text);
     return NextResponse.json(parsedResult);

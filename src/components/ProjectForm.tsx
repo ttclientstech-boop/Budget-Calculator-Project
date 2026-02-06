@@ -135,6 +135,9 @@ export default function ProjectForm() {
 
             const analysisData = await response.json();
 
+            // Log AI data as requested
+            console.log("AI Proposal Data:", analysisData);
+
             // Store data for the analysis page to consume
             const fullReportData = {
                 client: {
