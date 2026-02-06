@@ -47,7 +47,7 @@ const ServiceCard = ({ icon: Icon, title, description, delay }: { icon: React.El
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
     transition={{ duration: 0.5, delay }}
-    className="group relative h-full bg-white/50 backdrop-blur-md border border-white/50 p-8 rounded-3xl hover:bg-white/80 transition-all duration-500 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-2"
+    className="group relative h-full bg-white border border-gray-200/60 p-8 rounded-3xl hover:bg-white transition-all duration-500 shadow-xl shadow-gray-200/60 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-2"
   >
     <div className="absolute inset-0 bg-gradient-to-br from-orange-50/50 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
@@ -234,14 +234,14 @@ export default function BudgetCalculatorFunnel() {
                 transition={{ duration: 0.6 }}
                 className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/50 shadow-sm mb-6 mx-auto lg:mx-0"
               >
-                <div className="relative h-6 w-6">
+                {/* <div className="relative h-6 w-6">
                   <Image
                     src="/images/newlogo.png"
                     alt="Talentronaut Logo"
                     fill
                     className="object-contain"
                   />
-                </div>
+                </div> */}
                 <span className="text-sm font-semibold text-gray-800 tracking-wide uppercase whitespace-nowrap">Talentronaut Estimation Engine</span>
               </motion.div>
 
@@ -251,26 +251,26 @@ export default function BudgetCalculatorFunnel() {
                 transition={{ duration: 0.8, delay: 0.1 }}
                 className="text-4xl md:text-5xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] mb-6 tracking-tight"
               >
-                Turn Your Vision Into <br />
+                Eliminate Guesswork. <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600">
-                  Engineered Reality.
+                  Get Clear Budgets, Timelines & Deliverables.
                 </span>
               </motion.h1>
 
-              <motion.p
+              {/* <motion.p
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
                 className="text-xl text-gray-600 mb-8 max-w-xl leading-relaxed"
               >
                 Stop the guesswork. Talentronaut analyzes your requirements to provide precision-engineered budget breakdowns and development timelines in seconds.
-              </motion.p>
+              </motion.p> */}
 
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
-                className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start"
+                className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start items-center lg:items-start"
               >
                 <button suppressHydrationWarning
                   onClick={scrollToForm}
@@ -368,12 +368,22 @@ export default function BudgetCalculatorFunnel() {
         </div>
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-32 relative z-10">
-          <div className="flex flex-col-reverse lg:grid lg:grid-cols-12 gap-12 items-start">
+          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-12 items-start">
+
+            <div className="lg:col-span-12 flex justify-center mb-0">
+              <FadeIn>
+                <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-sm mx-auto">
+                  <span className="text-sm font-semibold text-white tracking-wide uppercase whitespace-nowrap">PROJECT DETAILS & ESTIMATION</span>
+                </div>
+              </FadeIn>
+            </div>
 
             {/* Form Info Left */}
             <div className="lg:col-span-4 lg:sticky lg:top-32 text-white text-center lg:text-left">
               <FadeIn>
-                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-8 shadow-2xl shadow-orange-500/20 mx-auto lg:mx-0">
+
+
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl hidden lg:flex items-center justify-center mb-8 shadow-2xl shadow-orange-500/20 mx-auto lg:mx-0">
                   <div className="relative w-10 h-10">
                     <Image
                       src="/images/newlogo.png"
@@ -389,7 +399,7 @@ export default function BudgetCalculatorFunnel() {
                 <p className="text-lg text-orange-100 max-w-2xl mx-auto lg:mx-0">
                   Fill in the details below. Talentronaut makes budget calculation easy for you.
                 </p>
-                <div className="space-y-6">
+                <div className="space-y-6 hidden lg:block">
                   {[
                     "Instant Quote Generation",
                     "Detailed Phase Breakdown",
